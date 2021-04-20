@@ -11,7 +11,4 @@ atoms = molecule('H2O')
 atoms.set_cell(8*np.identity(3))
 atoms.center()
 view(atoms)
-io.write('water.traj', atoms)
-
-
-
+io.write('start.traj', atoms)

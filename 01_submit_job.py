@@ -23,6 +23,7 @@ from kul_tools import KulTools as KT
 kt = KT(gamma_only=False,structure_type='zeo')
 kt.set_calculation_type('opt')
 atoms = io.read('start.traj')
+atoms.pbc=True
 kt.set_structure(atoms)
 kt.set_overall_vasp_params({'gga':'RP','nupdown':5})
 kt.run()

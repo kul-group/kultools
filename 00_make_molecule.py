@@ -13,3 +13,4 @@ view(atoms)
 io.write('start.traj', atoms)
 
 # git exercise
+# another addition

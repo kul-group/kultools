@@ -11,5 +11,3 @@ atoms.set_cell(8*np.identity(3))
 atoms.center()
 view(atoms)
 io.write('start.traj', atoms)
-
-# git exercise

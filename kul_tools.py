@@ -21,7 +21,9 @@ class KulTools:
         self.working_dir = os.getcwd()
         
         self.hpc = self.identify_hpc_cluster()
+        print('KT: HPC= %s' %self.hpc)
         self.gamma_only = gamma_only
+        print('KT: VASP_GAMMA= %s' %self.gamma_only)
         
         self.structure_type = structure_type
         self.calculation_type = calculation_type
@@ -29,6 +31,9 @@ class KulTools:
         self.structure = structure 
 
         self.identify_vasp_eviron()
+        print('KT: VASP_PP_PATH= %s' %self.vasp_pp_path)
+        print('KT: VASP_COMMAND= %s' %self.vasp_command)
+
         self.assign_default_calculator()
 
     def identify_hpc_cluster(self):
@@ -36,7 +41,10 @@ class KulTools:
         if path_home.startswith('/global/homes'):
             host_name = 'cori'
         elif path_home.startswith('/home/'):
-            host_name = 'hpc1'
+            if os.environ['SLURM_SUBMIT_HOST']=='hpc1':
+                host_name = 'hpc1'
+            elif os.environ['SLURM_SUBMIT_HOST']=='hpc2':
+                host_name = 'hpc2'
         elif path_home.startswith('/Users/'):
             host_name = 'local'
         elif path_home.startswith('/home1/'):
@@ -54,6 +62,16 @@ class KulTools:
             else:
                 vasp_exe = 'vasp_std'
             os.environ['VASP_COMMAND']='module load vasp/5.4.4pl2-vtst; NTASKS=`echo $SLURM_TASKS_PER_NODE|tr \'(\' \' \'|awk \'{print $1}\'`; NNODES=`scontrol show hostnames $SLURM_JOB_NODELIST|wc -l`; NCPU=`echo " $NTASKS * $NNODES " | bc`; echo "num_cpu=" $NCPU; srun -n $NCPU %s | tee -a op.vasp' % vasp_exe
+
+        elif self.hpc == 'hpc2':
+            os.environ['VASP_PP_PATH']='/home/ark245/programs/pseudopotentials/pseudo54' 
+            if self.gamma_only:
+                vasp_exe = 'vasp_gam'
+            else:
+                vasp_exe = 'vasp_std'
+            os.environ['VASP_COMMAND']='NTASKS=`echo $SLURM_TASKS_PER_NODE|tr \'(\' \' \'|awk \'{print $1}\'`; NNODES=`scontrol show hostnames $SLURM_JOB_NODELIST|wc -l`; NCPU=`echo " $NTASKS * $NNODES " | bc`; echo "num_cpu=" $NCPU; $(which mpirun) --map-by core --display-map --report-bindings --mca btl_openib_allow_ib true --mca btl_openib_if_include mlx5_0:1 --mca btl_openib_warn_nonexistent_if 0 --mca btl_openib_warn_no_device_params_found 0 --mca pml ob1 --mca btl openib,self,vader --mca mpi_cuda_support 0 -np $NCPU %s | tee -a op.vasp' % vasp_exe 
+            print(os.environ['VASP_COMMAND'])
+
         elif self.hpc == 'cori':
             os.environ['VASP_PP_PATH']='/global/homes/a/ark245/pseudopotentials/PBE54'
             if self.gamma_only: 

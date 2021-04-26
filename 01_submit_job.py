@@ -25,7 +25,7 @@ kt.set_calculation_type('opt')
 atoms = io.read('start.traj')
 atoms.pbc=True
 kt.set_structure(atoms)
-kt.set_overall_vasp_params({'gga':'RP','nupdown':5})
+kt.set_overall_vasp_params({'gga':'RP'})
 kt.run()
 
 

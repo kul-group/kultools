@@ -64,7 +64,7 @@ class KulTools:
             os.environ['VASP_COMMAND']='module load vasp/5.4.4pl2-vtst; NTASKS=`echo $SLURM_TASKS_PER_NODE|tr \'(\' \' \'|awk \'{print $1}\'`; NNODES=`scontrol show hostnames $SLURM_JOB_NODELIST|wc -l`; NCPU=`echo " $NTASKS * $NNODES " | bc`; echo "num_cpu=" $NCPU; srun -n $NCPU %s | tee -a op.vasp' % vasp_exe
 
         elif self.hpc == 'hpc2':
-            os.environ['VASP_PP_PATH']='/home/ark245/programs/pseudopotentials/pseudo54' 
+            os.environ['VASP_PP_PATH']='/home/sours/programs/vasp_PP' # '/home/ark245/programs/pseudopotentials/pseudo54' 
             if self.gamma_only:
                 vasp_exe = 'vasp_gam'
             else:

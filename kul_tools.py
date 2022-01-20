@@ -168,15 +168,20 @@ class KulTools:
         return self.structure
         
     def _change_to_dir(self,dir_name):
-        os.chdir(self.working_dir)
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
         os.chdir(dir_name)
 
     def run_dft(self,atoms,dir_name):
-        self._change_to_dir(dir_name)
         atoms.set_calculator(self.calc)
         atoms.calc.set(**self.overall_vasp_params)
+        if self.calculation_type == 'opt' or self.calculation_type == 'vib':
+            encut_for_dir = atoms.calc.float_params['encut']
+            kpts_for_dir = ''.join([str(val) for val in atoms.calc.input_params['kpts']])
+            func_for_dir = atoms.calc.input_params['xc']
+            directory = dir_name + '_' + str(func_for_dir) + '_' + str(encut_for_dir) + '_' + str(kpts_for_dir)
+
+        self._change_to_dir(directory)
         energy = atoms.get_potential_energy() # Run vasp here
         os.chdir(self.working_dir) 
 
@@ -197,6 +202,8 @@ class KulTools:
             self.structure_after = self.run_vib()
         elif self.calculation_type == 'solv':
             self.structure_after = self.run_solv()
+        elif self.calculation_type == 'md':
+            self.structure_after = self.run_md()
 
     def run_spe(self):
         """Runs a simple single point energy"""
@@ -210,8 +217,8 @@ class KulTools:
     def run_opt(self):
         """Runs a simple optimization"""
         atoms = self.structure
-        dir_name = 'opt' 
         self.calc = self.calc_default
+        dir_name = 'opt'
         new_atoms = self.run_dft(atoms,dir_name)
         return new_atoms
     
@@ -264,7 +271,14 @@ class KulTools:
         
         return new_atoms
         
-    
+    def run_md(self):
+        """Runs a finer optimization"""
+        atoms = self.structure
+        dir_name = 'md'
+        self.calc = self.calc_default
+        self.calc.set(nsw=100000,ibrion=0,tebeg=298, isif=2, smass=0)
+        new_atoms = self.run_dft(atoms,dir_name)
+        return new_atoms
     
     
     

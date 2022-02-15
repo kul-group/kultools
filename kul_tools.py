@@ -1,4 +1,4 @@
-# Kulkarn group @ UC Davis 
+# Kulkarni group @ UC Davis 
 """Definition of the Zeotype class.
 
 This module defines the central object in analyzing Zeotypes 
@@ -362,14 +362,3 @@ class KulTools:
         
         return atoms
         
-
-
-
-
-
-
-
-
-
-
-    

@@ -21,7 +21,7 @@ from kt.calculation_type import calc_params...
 
 from kt_structure import KT_structure
 from ase.calculators.vasp import Vasp
-from load_environ import identify_hpc_cluster, identify_vasp_eviron
+from load_environ import identify_hpc_cluster, identify_vasp_environ
 
 
 class KT_Object(KT_structure):
@@ -41,18 +41,26 @@ class KT_Object(KT_structure):
         self.user_params = calc_params
         self.kt_params = {}
 
+        self._set_environment_variables()
+
         if self.calc_name.lower() == "vasp":
-            self.load_structure_type_params_vasp()
-            self.load_calc_type_params_vasp()
+            self._load_structure_type_params_vasp()
+            self._load_calc_type_params_vasp()
 
-        self.load_update_kt_params()
+        self._load_update_kt_params()
 
-        self.init_ase_calc()
+        self._init_ase_calc()
 
-        self.hpc = identify_hpc_cluster()
-        identify_vasp_eviron(self.hpc, self.gamma)
+    def _set_environment_variables(self):
+        if self.calc_name.lower() == "vasp":
+            self.hpc = identify_hpc_cluster()
+            print("ENVIRONMENT VARIABLES ARE AT:")
+            print(identify_vasp_environ(self.hpc, self.gamma))
 
-    def load_structure_type_params_vasp(self):
+        else:
+            pass
+
+    def _load_structure_type_params_vasp(self):
 
         if self.structure_type.lower() == "metal":
             self.default_calc_params.update({"sigma": 0.2, "ismear": 1})
@@ -63,7 +71,7 @@ class KT_Object(KT_structure):
         else:
             pass
 
-    def load_calc_type_params_vasp(self):
+    def _load_calc_type_params_vasp(self):
 
         if self.calculation_type.lower() == "spe":
             self.default_calc_params.update({"nsw": 0})
@@ -120,11 +128,11 @@ class KT_Object(KT_structure):
         else:
             pass
 
-    def load_update_kt_params(self):
+    def _load_update_kt_params(self):
         self.default_calc_params.update(self.user_params)
         self.kt_params = self.default_calc_params
 
-    def init_ase_calc(self):
+    def _init_ase_calc(self):
         if self.calc_name.lower() == "vasp":
             self.ase_calculator = Vasp()
         else:

@@ -20,12 +20,12 @@ def identify_hpc_cluster():
     return host_name
 
 
-def identify_vasp_eviron(hpc, gamma_only):
+def identify_vasp_environ(hpc, gamma_only):
     if hpc.lower() == "hpc1":
         os.environ[
             "VASP_PP_PATH"
         ] = "/home/ark245/programs/vasp5.4.4/pseudopotentials/pseudo54"
-        if self.gamma_only:
+        if gamma_only:
             vasp_exe = "vasp_gam"
         else:
             vasp_exe = "vasp_std"
@@ -38,7 +38,7 @@ def identify_vasp_eviron(hpc, gamma_only):
         os.environ[
             "VASP_PP_PATH"
         ] = "/home/sours/programs/vasp_PP"  # '/home/ark245/programs/pseudopotentials/pseudo54'
-        if self.gamma_only:
+        if gamma_only:
             vasp_exe = "vasp_gam"
         else:
             vasp_exe = "vasp_std"
@@ -50,7 +50,7 @@ def identify_vasp_eviron(hpc, gamma_only):
 
     elif hpc.lower() == "cori":
         os.environ["VASP_PP_PATH"] = "/global/homes/a/ark245/pseudopotentials/PBE54"
-        if self.gamma_only:
+        if gamma_only:
             vasp_exe = "vasp_gam"
         else:
             vasp_exe = "vasp_std"
@@ -61,7 +61,7 @@ def identify_vasp_eviron(hpc, gamma_only):
 
     elif hpc.lower() == "stampede":
         os.environ["VASP_PP_PATH"] = "/home1/05364/ark245/pseudopotentials/PBE54"
-        if self.gamma_only:
+        if gamma_only:
             vasp_exe = "vasp_gam_vtst"
         else:
             vasp_exe = "vasp_std_vtst"
@@ -72,7 +72,7 @@ def identify_vasp_eviron(hpc, gamma_only):
 
     elif hpc.lower() == "local":
         os.environ["VASP_PP_PATH"] = "local_vasp_pp"
-        if self.gamma_only:
+        if gamma_only:
             vasp_exe = "vasp_gam"
         else:
             vasp_exe = "vasp_std"
@@ -80,5 +80,6 @@ def identify_vasp_eviron(hpc, gamma_only):
     else:
         print("Check cluster settings")
         sys.exit()
-    self.vasp_pp_path = os.environ["VASP_PP_PATH"]
-    self.vasp_command = os.environ["VASP_COMMAND"]
+    vasp_pp_path = os.environ["VASP_PP_PATH"]
+    vasp_command = os.environ["VASP_COMMAND"]
+    return vasp_pp_path, vasp_command

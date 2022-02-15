@@ -9,7 +9,7 @@ class run_KulTools(KT_Object):
 
         self.run_calculation()
 
-            
+
     def run_calculation(self):
 
         if self.calculation_type.lower() == 'opt':
@@ -29,7 +29,6 @@ class run_KulTools(KT_Object):
         ase_atoms.set_calculator(self.ase_calculator)
         energy = atoms.get_potential_energy()
 
-        
+
         new_atoms = self.run_dft(atoms,dir_name)
         return new_atoms
-

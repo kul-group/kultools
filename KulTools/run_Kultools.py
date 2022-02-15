@@ -1,14 +1,11 @@
 from copy import copy
-
+from KT_object import KT_Object
 
 class run_KulTools(KT_Object):
 
     def __init__(self,gamma_only,structure,structure_type,calculator_name,calculation_type,calc_params={}):
 
         super().__init__(gamma_only,structure,structure_type,calculator_name,calculation_type,calc_params)
-
-        self.run_calculation()
-
 
     def run_calculation(self):
 
@@ -18,7 +15,7 @@ class run_KulTools(KT_Object):
         elif
         else
 
-    def run_opt(self):
+    def _run_opt(self):
         ase_atoms = copy.deepcopy(self.structure)
 
         dir_name = 'opt'
@@ -27,8 +24,8 @@ class run_KulTools(KT_Object):
         self.ase_calculator.set('directory':os.getwd())
 
         ase_atoms.set_calculator(self.ase_calculator)
-        energy = atoms.get_potential_energy()
+        energy = ase_atoms.get_potential_energy()
 
 
-        new_atoms = self.run_dft(atoms,dir_name)
+        new_atoms = self.run_dft(ase_atoms,dir_name)
         return new_atoms

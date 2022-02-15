@@ -10,18 +10,18 @@ class KT_structure(default_calc):
         self.calc_name = calculator_name
         self.calculation_type = calculation_type
 
-        self.check_calculator_name()
-        self.load_default_calc_params()
-        self.check_structure_type()
-        self.check_calc_type()
+        self._check_calculator_name()
+        self._load_default_calc_params()
+        self._check_structure_type()
+        self._check_calc_type()
 
-    def check_calculator_name(self):
+    def _check_calculator_name(self):
 
         assert self.calc_name.lower() in ["vasp", "emt"], (
             "Unknown/Not implemented calculator name = %s" % self.calc_name
         )
 
-    def load_default_calc_params(self):
+    def _load_default_calc_params(self):
 
         if self.calc_name.lower() == "vasp":
             self.default_calc_params = self.load_default_vasp()
@@ -29,7 +29,7 @@ class KT_structure(default_calc):
         else:
             pass
 
-    def check_structure_type(self):
+    def _check_structure_type(self):
 
         if self.calculation_type.lower() == "neb":
             assert isinstance(self.structure, list) and isinstance(
@@ -43,7 +43,7 @@ class KT_structure(default_calc):
             "Unknown structure_type = %s" % self.structure_type
         )
 
-    def check_calc_type(self):
+    def _check_calc_type(self):
 
         assert self.calculation_type.lower() in [
             "spe",

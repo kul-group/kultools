@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .vs/
 .ipynb_checkpoints/
+.idea/
 
 *.db
 *.traj

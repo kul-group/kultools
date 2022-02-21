@@ -10,8 +10,9 @@ class run_KulTools(KT_Object):
     def run_calculation(self):
 
         if self.calculation_type.lower() == 'opt':
-            self.run_opt()
-        elif
+            self._run_opt()
+        elif self.calculation_type.lower() == 'vib':
+            self._run_vib()
         elif
         else
 
@@ -24,7 +25,7 @@ class run_KulTools(KT_Object):
         self.ase_calculator.set('directory':os.getwd())
 
         ase_atoms.set_calculator(self.ase_calculator)
-        energy = ase_atoms.get_potential_energy()
+        energy = ase_atoms.get_potential_energy() #Running vasp
 
 
         new_atoms = self.run_dft(ase_atoms,dir_name)

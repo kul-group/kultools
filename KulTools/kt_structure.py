@@ -40,7 +40,8 @@ class KT_structure(default_calc):
             assert isinstance(self.structure, Atoms), "Not an ASE atoms object"
 
         assert self.structure_type.lower() in ["zeo", "mof", "metal", "gas-phase"], (
-            "Unknown structure_type = %s" % self.structure_type
+            "Unknown structure_type = %s"
+            % self.structure_type  # Add insulating slab , conducting slab and gas-phase no need for metal
         )
 
     def _check_calc_type(self):

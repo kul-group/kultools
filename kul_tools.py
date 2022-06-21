@@ -175,11 +175,11 @@ class KulTools:
     def run_dft(self,atoms,dir_name):
         atoms.set_calculator(self.calc)
         atoms.calc.set(**self.overall_vasp_params)
-        if self.calculation_type == 'opt' or self.calculation_type == 'vib':
-            encut_for_dir = atoms.calc.float_params['encut']
-            kpts_for_dir = ''.join([str(val) for val in atoms.calc.input_params['kpts']])
-            func_for_dir = atoms.calc.input_params['xc']
-            directory = dir_name + '_' + str(func_for_dir) + '_' + str(encut_for_dir) + '_' + str(kpts_for_dir)
+        #if self.calculation_type == 'opt' or self.calculation_type == 'vib':
+        encut_for_dir = atoms.calc.float_params['encut']
+        kpts_for_dir = ''.join([str(val) for val in atoms.calc.input_params['kpts']])
+        func_for_dir = atoms.calc.input_params['xc']
+        directory = dir_name + '_' + str(func_for_dir) + '_' + str(encut_for_dir) + '_' + str(kpts_for_dir)
 
         self._change_to_dir(directory)
         energy = atoms.get_potential_energy() # Run vasp here
@@ -204,6 +204,8 @@ class KulTools:
             self.structure_after = self.run_solv()
         elif self.calculation_type == 'md':
             self.structure_after = self.run_md()
+        elif self.calculation_type == 'spe':
+            self.structure_after = self.run_spe()
 
     def run_spe(self):
         """Runs a simple single point energy"""

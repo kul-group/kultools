@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from numpy import linalg as LA
 import matplotlib.pyplot as plt
@@ -14,7 +15,10 @@ TODO:
     - stop enumerate when no all freq read
 - Check logic for get_freq(element)
 - Add sanity checks
+
+
 """
+
 
 class VibModes:
     """
@@ -28,10 +32,10 @@ class VibModes:
             [freq_min, freq_max].
     """
 
-    def __init__(self, OUTCAR, frequency_range=None):
+    def __init__(self, OUTCAR, traj_file_path, frequency_range=None):
         self.set_range(frequency_range)
         self.OUTCAR = OUTCAR
-        self.atoms = next(iread(OUTCAR, index=0))
+        self.atoms = next(iread(traj_file_path))
         self.n_atoms = len(self.atoms)
         self.chemical_symbols = self.atoms.get_chemical_symbols()
         self.frequencies = []
@@ -56,7 +60,7 @@ class VibModes:
                         disp = self._get_disp(lines[i + 2 : i + self.n_atoms + 2])
                         self.displacements.append(disp)
 
-    def write(self, mult=1):
+    def write(self, path, mult=1):
         # freq_range is already passed in the init function
         r = self.atoms.get_positions()
         atoms = self.atoms.copy()
@@ -64,62 +68,51 @@ class VibModes:
         for freq, disp in zip(self.frequencies, self.displacements):
             if self.min_freq <= abs(freq) <= self.max_freq:
                 i = "" if freq > 0 else "i"
-                traj = Trajectory(f"modes/{j:04d}_{abs(freq):.0f}{i}.traj", "w")
+                traj_folder = os.path.join(path, "modes")
+                if not os.path.exists(traj_folder):
+                    os.makedirs(traj_folder)
+                traj_path = os.path.join(traj_folder, f"{j:04d}_{abs(freq):.0f}{i}.traj")
+                traj = Trajectory(traj_path, "w")
                 for x in np.linspace(0.0, 2 * np.pi, 20, endpoint=False):
                     atoms.set_positions(r + mult * np.sin(x) * disp)
                     traj.write(atoms)
                 j += 1
 
-    def get_freqs(self, element_1: str, element_2=None, **kwargs) -> list[int]:
-
+    def get_freqs(self, tag, **kwargs) -> list[int]:
         # validate element_1 is correct
-
-        prim_elmt_posns = set(self.__get_element_position(element_1))
-
-        element_1_freqs = []
+        selected_freq = []
+        tag_indicies = set(self.__get_element_position(tag))
 
         for freq, disp in zip(self.frequencies, self.displacements):
-            primary_elmt_disps = []
+            tagged_element_disps = []
             all_displacements = []
 
-            for position in range(len(disp)):
+            for position in range(len(self.atoms)):
                 delta = self.__get_displacement(disp, position)
-                l2_norm = self.__get_l2_norm(delta)
-                all_displacements.append(l2_norm)
-                if position in prim_elmt_posns:
-                    primary_elmt_disps.append(l2_norm)
+                if position in tag_indicies:
+                    tagged_element_disps.append(delta)
+                else:
+                    all_displacements.append(delta)
+                
+            if self.__is_prefered_displacements(
+                all_displacements, tagged_element_disps
+            ):
+                selected_freq.append(freq)
 
-            if self.__is_prefered_displacements(all_displacements, primary_elmt_disps):
-                element_1_freqs.append(freq)
-
-        return element_1_freqs
+        return selected_freq
 
     def __get_displacement(self, displacement_matrix, position):
         if len(displacement_matrix[position]) != 3:
             raise AttributeError
-        return displacement_matrix[position]
+        return self.__get_l2_norm(displacement_matrix[position])
 
-    def __get_element_position(self, element):
-        element_positions = []
-        chemical_symbols = self.chemical_symbols
-        for i in range(len(chemical_symbols)):
-            if chemical_symbols[i] == element:
-                element_positions.append(i)
+    def __get_element_position(self, tag):
+        indicies = []
+        for position in range(len(self.atoms)):
+            if self.atoms[position].tag == tag:
+                indicies.append(position)
 
-        return element_positions
-
-    def __get_bonds(self, primary_element_position, secondary_element_positions):
-
-        preferred_bonds = []
-        atom = self.atoms[primary_element_position]
-        analysis = Analysis(atom.atoms)
-        all_bonds = analysis.all_bonds[0]
-        primary_atom_bonds = all_bonds[primary_element_position]
-        for primary_atom_bond in primary_atom_bonds:
-            if primary_atom_bond in secondary_element_positions:
-                preferred_bonds.append(primary_atom_bond)
-
-        return preferred_bonds
+        return indicies
 
     def __get_l2_norm(self, delta: list[float], direction_vector=None):
         if direction_vector:
@@ -127,8 +120,8 @@ class VibModes:
         return LA.norm(delta)
 
     @staticmethod
-    def __is_prefered_displacements(all_displacements, primary_elmt_disps):
-        return max(all_displacements) in primary_elmt_disps
+    def __is_prefered_displacements(all_displacements, tagged_element_disps):
+        return sum(all_displacements) < sum(tagged_element_disps)
 
     @staticmethod
     def _get_freq(line):
@@ -142,3 +135,4 @@ class VibModes:
             return list(map(float, line.split()[-3:]))
 
         return np.array([_str_to_float(l) for l in lines])
+

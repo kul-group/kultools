@@ -30,6 +30,18 @@ class VibModes:
         OUTCAR (str): Path to OUTCAR file
         freuency_range (list[float]): Range of mode frequencies of interest, e.g.,
             [freq_min, freq_max].
+
+    Usage:
+    ```py
+    OUTCAR = '<OUTCAR-dir>/OUTCAR'
+    traj_file_path = '<tagged-atoms-dir>/tagged_atoms.traj'
+    tag = 1
+    modes = VibModes(OUTCAR, traj_file_path)
+    modes.read()
+    print(modes.get_freqs(tag))
+    modes.write('<output-dir>') # will create the folder if doesn't exist
+
+    ```
     """
 
     def __init__(self, OUTCAR, traj_file_path, frequency_range=None):

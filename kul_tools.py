@@ -39,7 +39,10 @@ class KulTools:
     def identify_hpc_cluster(self):
         path_home = os.environ['HOME']
         if path_home.startswith('/global/homes'):
-            host_name = 'cori'
+            if os.path.exists('/global/project/projectdirs'):
+                host_name = 'cori'
+            else:
+                host_name = 'perlmutter'
         elif path_home.startswith('/home/'):
             if os.environ['SLURM_SUBMIT_HOST']=='hpc1':
                 host_name = 'hpc1'

@@ -1,3 +1,3 @@
 from .vibrational_frequency import VibModes
 
-__all__=['VibModes']
+__all__ = ["VibModes"]

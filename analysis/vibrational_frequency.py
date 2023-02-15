@@ -1,10 +1,13 @@
 import os
+import warnings
+
 import numpy as np
 from numpy import linalg as LA
 import matplotlib.pyplot as plt
 from ase.io import iread, write
 from ase.geometry.analysis import Analysis
 from ase.io.trajectory import Trajectory
+
 
 """
 TODO:
@@ -72,6 +75,13 @@ class VibModes:
                         disp = self._get_disp(lines[i + 2 : i + self.n_atoms + 2])
                         self.displacements.append(disp)
 
+        if not self.frequencies:
+            warnings.warn(
+                "No frequency found in {0} for range [{1}, {2}]".format(
+                    self.OUTCAR, self.min_freq, self.max_freq
+                )
+            )
+
     def write(self, path, mult=1):
         # freq_range is already passed in the init function
         r = self.atoms.get_positions()
@@ -83,7 +93,9 @@ class VibModes:
                 traj_folder = os.path.join(path, "modes")
                 if not os.path.exists(traj_folder):
                     os.makedirs(traj_folder)
-                traj_path = os.path.join(traj_folder, f"{j:04d}_{abs(freq):.0f}{i}.traj")
+                traj_path = os.path.join(
+                    traj_folder, f"{j:04d}_{abs(freq):.0f}{i}.traj"
+                )
                 traj = Trajectory(traj_path, "w")
                 for x in np.linspace(0.0, 2 * np.pi, 20, endpoint=False):
                     atoms.set_positions(r + mult * np.sin(x) * disp)
@@ -105,7 +117,7 @@ class VibModes:
                     tagged_element_disps.append(delta)
                 else:
                     all_displacements.append(delta)
-                
+
             if self.__is_prefered_displacements(
                 all_displacements, tagged_element_disps
             ):
@@ -147,4 +159,3 @@ class VibModes:
             return list(map(float, line.split()[-3:]))
 
         return np.array([_str_to_float(l) for l in lines])
-

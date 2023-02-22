@@ -2,6 +2,7 @@ import os
 import warnings
 
 import numpy as np
+from ase.atoms import Atoms
 from numpy import linalg as LA
 import matplotlib.pyplot as plt
 from ase.io import iread, write
@@ -23,7 +24,7 @@ TODO:
 """
 
 
-class VibModes:
+class VibModes(object):
     """
     Class for visualizing vibrational modes from VASP calculations.
     Reads OUTCAR from ibrion=5/6 calculation and writes .traj files
@@ -47,10 +48,10 @@ class VibModes:
     ```
     """
 
-    def __init__(self, OUTCAR, traj_file_path, frequency_range=None):
+    def __init__(self, OUTCAR, atoms: Atoms, frequency_range=None):
         self.set_range(frequency_range)
         self.OUTCAR = OUTCAR
-        self.atoms = next(iread(traj_file_path))
+        self.atoms = atoms
         self.n_atoms = len(self.atoms)
         self.chemical_symbols = self.atoms.get_chemical_symbols()
         self.frequencies = []
@@ -102,7 +103,7 @@ class VibModes:
                     traj.write(atoms)
                 j += 1
 
-    def get_freqs(self, tag, **kwargs) -> list[int]:
+    def get_freqs(self, tag, **kwargs) -> list[float]:
         # validate element_1 is correct
         selected_freq = []
         tag_indicies = set(self.__get_element_position(tag))

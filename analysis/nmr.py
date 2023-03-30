@@ -15,7 +15,7 @@ class NMRFrequency(VibModes):
         " (absolute, valence and core) "  # id's the line where relevant data is.
     )
 
-    def __init__(self, OUTCAR, atoms, frequency_range=None):
+    def __init__(self, OUTCAR, atoms=None, frequency_range=None):
         super().__init__(OUTCAR, atoms, frequency_range)
 
     def read(self):

@@ -4,9 +4,7 @@ import warnings
 import numpy as np
 from ase.atoms import Atoms
 from numpy import linalg as LA
-import matplotlib.pyplot as plt
-from ase.io import iread, write
-from ase.geometry.analysis import Analysis
+from ase.io.vasp import read_vasp_out
 from ase.io.trajectory import Trajectory
 
 
@@ -48,10 +46,13 @@ class VibModes(object):
     ```
     """
 
-    def __init__(self, OUTCAR, atoms: Atoms, frequency_range=None):
+    def __init__(self, OUTCAR, atoms: Atoms = None, frequency_range=None):
         self.set_range(frequency_range)
         self.OUTCAR = OUTCAR
-        self.atoms = atoms
+        if atoms:
+            self.atoms = atoms
+        else:
+            self.atoms = read_vasp_out(filename=self.OUTCAR)
         self.n_atoms = len(self.atoms)
         self.chemical_symbols = self.atoms.get_chemical_symbols()
         self.frequencies = []

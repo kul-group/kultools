@@ -1,36 +1,64 @@
 #!/usr/bin/env python
+import os
+import warnings
+
 from ase.io import read, write
 from glob import glob
 import sys
 from ase.neighborlist import NeighborList, natural_cutoffs
 
-kwd = " (absolute, valence and core) "  # id's the line where relevant data is.
+from .vibrational_frequency import VibModes
 
-# User specifies what folders to loop through
-path_list = sys.argv[1:]
-path_list.sort()
-print(path_list)
 
-for path in path_list:
-    # Read in atoms object, find index of N next to Sn
-    # atoms object indexed starting at 0, OUTCAR index starts at 1; thus the +1
-    atoms = read(path + "/../input_for_nmr.traj")
-    nl = NeighborList(natural_cutoffs(atoms), bothways=True, self_interaction=False)
-    nl.update(atoms)
+class NMRFrequency(VibModes):
+    nmr_outcar_keyword = (
+        " (absolute, valence and core) "  # id's the line where relevant data is.
+    )
 
-    sn_index = [i.index for i in atoms if i.symbol == "Sn"][0]
-    neigh_ind = nl.get_neighbors(sn_index)[0]
-    ind = [i for i in neigh_ind if atoms[i].symbol == "N"][0] + 1
+    def __init__(self, OUTCAR, atoms=None, frequency_range=None):
+        super().__init__(OUTCAR, atoms, frequency_range)
 
-    # Read the OUTCAR and report ISO_SHIFT for the atom
-    with open(path + "/OUTCAR", "r") as file:
-        lines = file.readlines()
+    def read(self):
+        with open(self.OUTCAR) as file:
+            lines = file.readlines()
         for i, line in enumerate(lines):
-            if kwd in line:
-                data_line_ind = i + ind
-                break  # takes only the first matching section
+            if self.nmr_outcar_keyword in line:
+                for atom_index in range(len(self.atoms)):
+                    nmr_freq_index = (
+                        i + 1 + atom_index
+                    )  # i for line number in OUTCAR, +1 for skipping the line self.nmr_outcar_keyword and atom_index for different atoms in the structure
+                    freq = self._get_freqs(
+                        lines[nmr_freq_index]
+                    )  # skipping the line self.nmr_outcar_keyword
+                    if self.min_freq <= abs(freq) <= self.max_freq:
+                        self.frequencies.append(freq)
+                break
 
-        iso_shift = lines[data_line_ind].split()[
-            4
-        ]  # Gets the 5th column containing iso_shift (incl. G=0 contribution)
-        print(iso_shift)
+        if not self.frequencies:
+            raise ValueError(
+                "No frequency found in {0} for range [{1}, {2}]".format(
+                    self.OUTCAR, self.min_freq, self.max_freq
+                )
+            )
+
+    def _get_freqs(self, line, position=4) -> float:
+        """
+        Args:
+            line (_type_): Line containing NMR frequency
+            position (int, optional): Gets the 5th column containing iso_shift (incl. G=0 contribution). Defaults to 4.
+
+        Returns:
+            int: iso_shift
+        """
+        return float(line.split()[position])
+
+    def write(self, path, mult=1):
+        raise NotImplementedError("Write for NMR is not implemented")
+
+    def get_freqs(self, tag, **kwargs) -> list[float]:
+        tag_indicies = set(self.__get_element_position(tag))
+
+        return [self.frequencies[index] for index in tag_indicies]
+
+    def __get_element_position(self, tag):
+        return super()._VibModes__get_element_position(tag)

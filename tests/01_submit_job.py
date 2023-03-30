@@ -18,7 +18,7 @@ Created on Thu Mar 26 17:10:56 2020
 import os, sys 
 sys.path.insert(0,'/home/ark245/lib/onboarding_DFT/')
 from ase import io
-from kul_tools import KulTools as KT
+from src.kul_tools import KulTools as KT
 
 kt = KT(gamma_only=False,structure_type='zeo')
 kt.set_calculation_type('opt')

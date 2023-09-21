@@ -9,6 +9,9 @@
 #SBATCH --error=job.err
 #SBATCH --time=28:00:00
 #SBATCH --verbose
+# For stop eligiblity and requeue
+#SBATCH --signal=B:USR1@240 --requeue --open-mode=append
+
 
 import shutil
 from ase.parallel import *

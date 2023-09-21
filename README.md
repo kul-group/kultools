@@ -29,7 +29,7 @@ pip install kultools
 >>> from kul_tools import KulTools as KT
 >>> from ase.build import molecule
 
->>> kt = KT(gamma_only=False,structure_type='zeo')
+>>> kt = KT(gamma_only=False,structure_type='zeo',is_stop_eligible=True)
 KT: HPC= local
 KT: VASP_GAMMA= False
 KT: VASP_PP_PATH= local_vasp_pp
@@ -42,7 +42,8 @@ KT: VASP_COMMAND= local_vasp_std
 >>> 
 >>> kt.set_structure(atoms)
 >>> kt.set_overall_vasp_params({'gga':'RP'})
->>> kt.run()
+>>> atoms = kt.run()
+
 ```
 
 ## Task List

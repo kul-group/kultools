@@ -3,9 +3,14 @@
 
 This module defines the central object in analyzing Zeotypes 
 """
+import sys
+import os
+import shutil
+import signal
 
-import sys, os
+from datetime import datetime
 import numpy as np 
+
 from ase import Atoms
 from ase.neighborlist import NeighborList
 try:
@@ -15,9 +20,24 @@ except:
 from ase.visualize import view
 from ase.calculators.vasp import Vasp
 
+from pymatgen.io.vasp.outputs import Vasprun
+
 class KulTools:
     """KulTools class that provides all the necessary tools for running simulations. Currently targetted towards using vasp. """
-    def __init__(self,gamma_only=False,structure_type=None,calculation_type='spe',structure=None): 
+    def __init__(self,gamma_only=False,structure_type=None,calculation_type='spe',structure=None, is_stop_eligible=False): 
+        """
+        """
+
+        """_summary_
+
+        Args:
+            gamma_only (bool, optional): _description_. Defaults to False.
+            structure_type (str, optional): one of 'zeo','mof','metal','gas-phase','insulators', 'semiconductors'. Defaults to None.
+            calculation_type (str, optional): _description_. Defaults to 'spe'.
+            structure (_type_, optional): _description_. Defaults to None.
+            is_stop_eligible(bool, False): 
+        """
+
         self.working_dir = os.getcwd()
         
         self.hpc = self.identify_hpc_cluster()
@@ -29,6 +49,7 @@ class KulTools:
         self.calculation_type = calculation_type
         self.main_dir = os.getcwd()
         self.structure = structure 
+        self.is_stop_eligible = is_stop_eligible
 
         self.identify_vasp_eviron()
         print('KT: VASP_PP_PATH= %s' %self.vasp_pp_path)
@@ -52,6 +73,10 @@ class KulTools:
             host_name = 'local'
         elif path_home.startswith('/home1/'):
             host_name = 'stampede'
+        elif path_home.startswith("/jet/home/"):
+            host_name = "bridges2"
+        elif path_home.startswith("/g/g91/"):
+            host_name = "quartz"
         else:
             print('Check cluster settings')
             sys.exit()
@@ -89,6 +114,12 @@ class KulTools:
             else:
                 vasp_exe = 'vasp_std_vtst'
             os.environ['VASP_COMMAND']='module load vasp/5.4.4; export OMP_NUM_THREADS=1;rm op.vasp; mpirun -np $SLURM_NTASKS %s | tee op.vasp' % vasp_exe
+        elif self.hpc == "bridges2":
+            print(os.environ["HOSTNAME"])
+            os.environ["VASP_PP_PATH"] = "/jet/home/rgoel/uo2/vasp_PP"
+            os.environ[
+                "ASE_VASP_COMMAND"
+            ] = 'mpirun -np $SLURM_NTASKS /opt/packages/VASP/VASP5/PGI/vasp_std'
         elif self.hpc == 'local':
             os.environ['VASP_PP_PATH']='local_vasp_pp'
             if self.gamma_only: 
@@ -97,10 +128,11 @@ class KulTools:
                 vasp_exe = 'vasp_std'
             os.environ['VASP_COMMAND']='local_%s' % vasp_exe
         else: 
-            print('Check cluster settings')
-            sys.exit()
+            if (os.environ.get('VASP_PP_PATH', None) is None) or ((os.environ.get('VASP_COMMAND', None) or os.environ.get('ASE_VASP_COMMAND', None)) is None):
+                print('Check cluster settings')
+                sys.exit()
         self.vasp_pp_path = os.environ['VASP_PP_PATH']
-        self.vasp_command = os.environ['VASP_COMMAND']
+        self.vasp_command = os.environ.get('VASP_COMMAND', None) or os.environ.get('ASE_VASP_COMMAND', None)
 
     def assign_default_calculator(self):
         """Sets a default calculator regadless of the structure type"""
@@ -109,7 +141,7 @@ class KulTools:
             encut=500,
             ispin=2,
             nsw=50,
-            prec='Normal',
+            prec="Normal",
             istart=1,
             isif=2,
             ismear=0,
@@ -134,6 +166,7 @@ class KulTools:
             lorbit=11,
             nupdown=-1,
             npar=4,
+            kpar=1,
             nsim=4,
             ivdw=12)
         self.modify_calc_according_to_structure_type()
@@ -142,13 +175,17 @@ class KulTools:
         self.overall_vasp_params = overall_vasp_params
         
     def modify_calc_according_to_structure_type(self):
-        assert self.structure_type in ['zeo','mof','metal','gas-phase'], "Unknown structure_type = %s" % self.structure_type
         if self.structure_type == 'zeo' or self.structure_type == 'mof': 
             pass
         elif self.structure_type == 'metal': 
             self.calc_default.set(sigma=0.2,ismear=1)
+        elif self.structure_type in ['insulators', 'semiconductors']: 
+            # ref: https://www.vasp.at/wiki/index.php/ISMEAR#Summary
+            self.calc_default.set(sigma=0.05,ismear=-5)
         elif self.structure_type == 'gas-phase': 
             self.calc_default.set(kpts=(1,1,1),lreal=False)
+        else:
+            raise ValueError("Unknown structure_type = %s" % self.structure_type)
             
     def set_calculation_type(self,calculation_type):
         assert self.calculation_type in ['spe','opt','opt_fine'], "Unknown calculation_type = %s" % self.calculation_type
@@ -176,6 +213,8 @@ class KulTools:
         os.chdir(dir_name)
 
     def run_dft(self,atoms,dir_name):
+        if self.is_stop_eligible:
+            signal.signal(signal.SIGUSR1, self.checkpoint)
         atoms.set_calculator(self.calc)
         atoms.calc.set(**self.overall_vasp_params)
         #if self.calculation_type == 'opt' or self.calculation_type == 'vib':
@@ -209,6 +248,7 @@ class KulTools:
             self.structure_after = self.run_md()
         elif self.calculation_type == 'spe':
             self.structure_after = self.run_spe()
+        return self.structure_after
 
     def run_spe(self):
         """Runs a simple single point energy"""
@@ -286,7 +326,23 @@ class KulTools:
         return new_atoms
     
     
-    
+    def checkpoint(self, signum, _):
+        print(f'Handling signal {signum} ({signal.Signals(signum).name}).')
+        with open("STOPCAR", "w") as stopcar:
+            stopcar.write("LSTOP = .TRUE.\n")
+        print("Wrote stopcar and waiting for the run to end @",os.getcwd())
+
+        # below code ref: https://stackoverflow.com/a/74112271/7630458
+        # scontrol requeue doc:https://slurm.schedmd.com/scontrol.html#SECTION_COMMANDS
+        # starttime slurm ref: https://slurm.schedmd.com/scontrol.html#SECTION_JOBS---SPECIFICATIONS-FOR-UPDATE-COMMAND
+        # update command ref: https://stackoverflow.com/a/73239001/7630458
+        # os.system('scontrol requeue $SLURM_JOB_ID')
+        # os.system('scontrol update jobid=$SLURM_JOB_ID StartTime=now+1h')
+        # os.system('sbatch --begin=now+120minutes -D={0} {1}'.format(root,sys.argv[0]))
+        # os.system('sbatch --dependency=afterany:$SLURM_JOB_ID -D={0} {1}'.format(root,sys.argv[0]))
+
+
+
 #    if not 'solv-opt' in mode and not 'solv-spe' in mode: 
 #            print('ERROR: Check mode')
 #            sys.exit()

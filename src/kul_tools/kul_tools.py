@@ -128,7 +128,7 @@ class KulTools:
                 vasp_exe = 'vasp_std'
             os.environ['VASP_COMMAND']='local_%s' % vasp_exe
         else: 
-            if (os.environ.get('VASP_PP_PATH', None) and os.environ.get('VASP_COMMAND', None)) is None:
+            if (os.environ.get('VASP_PP_PATH', None) is None) or ((os.environ.get('VASP_COMMAND', None) or os.environ.get('ASE_VASP_COMMAND', None)) is None):
                 print('Check cluster settings')
                 sys.exit()
         self.vasp_pp_path = os.environ['VASP_PP_PATH']

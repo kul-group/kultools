@@ -132,7 +132,7 @@ class KulTools:
                 print('Check cluster settings')
                 sys.exit()
         self.vasp_pp_path = os.environ['VASP_PP_PATH']
-        self.vasp_command = os.environ['VASP_COMMAND']
+        self.vasp_command = os.environ.get('VASP_COMMAND', None) or os.environ.get('ASE_VASP_COMMAND', None)
 
     def assign_default_calculator(self):
         """Sets a default calculator regadless of the structure type"""

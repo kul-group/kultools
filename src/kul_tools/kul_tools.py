@@ -248,6 +248,7 @@ class KulTools:
             self.structure_after = self.run_md()
         elif self.calculation_type == 'spe':
             self.structure_after = self.run_spe()
+        return self.structure_after
 
     def run_spe(self):
         """Runs a simple single point energy"""

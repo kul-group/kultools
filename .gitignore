@@ -130,3 +130,6 @@ dmypy.json
 
 # VS Code ignore
 .vscode/
+
+/workspace.xml
+*.db

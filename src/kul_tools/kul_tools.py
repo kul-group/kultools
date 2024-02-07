@@ -20,7 +20,6 @@ except:
 from ase.visualize import view
 from ase.calculators.vasp import Vasp
 
-from pymatgen.io.vasp.outputs import Vasprun
 
 class KulTools:
     """KulTools class that provides all the necessary tools for running simulations. Currently targetted towards using vasp. """
@@ -362,7 +361,7 @@ class KulTools:
 #        shutil.copyfile('../spe/WAVECAR','WAVECAR')
 #        atoms = opt(atoms,dir_name='solv-spe',nsw=0,lwave=False,lsol=True)
 
-    def run_specific_calcualtion_type():
+    def run_specific_calcualtion_type(self, mode, **kwargs):
         if self.calculation_type == 'opt':
             atoms = run_opt()
         elif self.calculation_type == 'opt_fine':

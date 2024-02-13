@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kultools"
-version = "0.3"
+version = "0.4"
 authors = [
   { name="Kulkarni Research Group", email="arkulkarni@ucdavis.edu" },
 ]

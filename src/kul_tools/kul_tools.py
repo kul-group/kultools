@@ -7,23 +7,18 @@ import sys
 import os
 import shutil
 import signal
+import warnings
 
 from datetime import datetime
 import numpy as np 
 
 from ase import Atoms
-from ase.neighborlist import NeighborList
-try:
-    from ase.neighborlist import natural_cutoffs
-except:
-    from ase.utils import natural_cutoffs
-from ase.visualize import view
 from ase.calculators.vasp import Vasp
 
 
 class KulTools:
     """KulTools class that provides all the necessary tools for running simulations. Currently targetted towards using vasp. """
-    def __init__(self,gamma_only=False,structure_type=None,calculation_type='spe',structure=None, is_stop_eligible=False): 
+    def __init__(self,gamma_only=False,structure_type=None,calculation_type='spe',structure=None, is_stop_eligible:bool=False, signal_number:int=signal.SIGUSR1): 
         """
         """
 
@@ -46,9 +41,17 @@ class KulTools:
         
         self.structure_type = structure_type
         self.calculation_type = calculation_type
+        
         self.main_dir = os.getcwd()
+        
         self.structure = structure 
+
         self.is_stop_eligible = is_stop_eligible
+        if self.is_stop_eligible:
+            signal.signal(signal_number, self.checkpoint)
+        else:
+            if (signal_number != signal.SIGUSR1):
+                warnings.warn("`signal_number` is set but is_stop_eligible is `False`. Early stop not enable and signal_number ignored")
 
         self.identify_vasp_eviron()
         print('KT: VASP_PP_PATH= %s' %self.vasp_pp_path)
@@ -212,8 +215,6 @@ class KulTools:
         os.chdir(dir_name)
 
     def run_dft(self,atoms,dir_name):
-        if self.is_stop_eligible:
-            signal.signal(signal.SIGUSR1, self.checkpoint)
         atoms.set_calculator(self.calc)
         atoms.calc.set(**self.overall_vasp_params)
         #if self.calculation_type == 'opt' or self.calculation_type == 'vib':

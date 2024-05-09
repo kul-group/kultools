@@ -26,6 +26,7 @@ pip install kultools
 ### Running a zeolite calculation using KulTools
 
 ```python
+>>> import numpy as np
 >>> from kul_tools import KulTools as KT
 >>> from ase.build import molecule
 

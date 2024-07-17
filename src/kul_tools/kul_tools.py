@@ -61,6 +61,7 @@ class KulTools:
 
     def identify_hpc_cluster(self):
         path_home = os.environ['HOME']
+        host_name = 'UNKNOWN'
         if path_home.startswith('/global/homes'):
             if os.path.exists('/global/project/projectdirs'):
                 host_name = 'cori'
@@ -79,9 +80,6 @@ class KulTools:
             host_name = "bridges2"
         elif path_home.startswith("/g/g91/"):
             host_name = "quartz"
-        else:
-            print('Check cluster settings')
-            sys.exit()
         return host_name
             
     def identify_vasp_eviron(self):
